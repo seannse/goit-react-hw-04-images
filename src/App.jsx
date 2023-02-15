@@ -1,6 +1,6 @@
 import css from './App.module.css';
-import React, { Component } from 'react';
-import { ToastContainer } from 'react-toastify';
+import React, { useState, useEffect } from 'react';
+import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import API from './API';
 import Searchbar from './components/Searchbar/Searchbar';
@@ -11,89 +11,87 @@ import Button from './components/Button/Button';
 
 const api = new API();
 
-export class App extends Component {
-  state = {
-    search: '',
-    images: [],
-    status: 'idle',
-    page: 1,
-    largeImageURL: null,
-    message: '',
-    totalImages: 0,
-    disabled: false,
-  };
+export function App() {
+  const [status, setStatus] = useState('idle');
+  const [largeImageURL, setLargeImageURL] = useState(null);
+  const [search, setSearch] = useState('');
+  const [images, setImages] = useState([]);
+  const [page, setPage] = useState(1);
+  const [message, setMessage] = useState('');
+  const [totalImages, setTotalImages] = useState(0);
+  const [disabled, setDisabled] = useState(false);
 
-  async componentDidUpdate(_, prevState) {
-    const { search, page } = this.state;
-    if (prevState.search !== search || prevState.page !== page) {
-      try {
-        this.setState({ status: 'pending', disabled: true });
+  useEffect(() => {
+    if (search) {
+      fetchImages(search, page);
+    }
+  }, [search, page]);
 
-        api.query = search;
-        api.page = page;
-        const imagesObj = await api.getPhotos();
-        const images = imagesObj.hits;
+  async function fetchImages(search, page) {
+    try {
+      setStatus('pending');
+      setDisabled(true);
 
-        if (!images.length) {
-          this.setState({
-            status: 'rejected',
-            message: 'Nothing found',
-          });
-          return;
-        }
+      api.query = search;
+      api.page = page;
+      const imagesObj = await api.getPhotos();
+      const images = imagesObj.hits;
 
-        this.setState(prevState => ({
-          images: [...prevState.images, ...images],
-          status: 'resolved',
-          totalImages: imagesObj.totalHits,
-        }));
-      } catch (error) {
-        this.setState({ message: error.message, status: 'rejected' });
-      } finally {
-        this.setState({ disabled: false });
+      if (!images.length) {
+        setStatus('rejected');
+        setMessage('Nothing found');
+        return;
       }
+
+      setImages(prevImages => [...prevImages, ...images]);
+      setStatus('resolved');
+      setTotalImages(imagesObj.totalHits);
+    } catch (error) {
+      setMessage(error.message);
+      setStatus('rejected');
+    } finally {
+      setDisabled(false);
     }
   }
 
-  loadMore = () => {
-    this.setState(prevState => ({
-      page: prevState.page + 1,
-    }));
-  };
+  function getQuery(value) {
+    if (search.toLowerCase() !== value.toLowerCase()) {
+      setSearch(value);
+      setImages([]);
+      setPage(1);
+      setTotalImages(0);
+      return;
+    }
 
-  handleSubmit = value => {
-    this.setState({ search: value, images: [], page: 1, totalImages: 0 });
-  };
-
-  getLargeImage = largeImageURL => {
-    this.setState({ largeImageURL });
-  };
-
-  closeModal = () => {
-    this.setState({ largeImageURL: null });
-  };
-
-  render() {
-    const { images, status, largeImageURL, message, totalImages, disabled } =
-      this.state;
-    return (
-      <div className={css.App}>
-        <ToastContainer />
-        <Searchbar handleSubmit={this.handleSubmit} disabled={disabled} />
-        {images.length !== 0 && (
-          <ImageGallery array={images} getLargeImage={this.getLargeImage} />
-        )}
-        {status === 'pending' && <Loader />}
-        {status === 'rejected' && (
-          <p style={{ textAlign: 'center' }}>{message}</p>
-        )}
-        {status === 'resolved' && images.length !== totalImages && (
-          <Button loadMore={this.loadMore} />
-        )}
-        {largeImageURL && (
-          <Modal largeImageURL={largeImageURL} closeModal={this.closeModal} />
-        )}
-      </div>
-    );
+    toast.info('Your request has already been completed');
   }
+
+  return (
+    <div className={css.App}>
+      <ToastContainer />
+      <Searchbar getQuery={getQuery} disabled={disabled} />
+      {images.length !== 0 && (
+        <ImageGallery array={images} getLargeImage={setLargeImageURL} />
+      )}
+      {status === 'pending' && <Loader />}
+      {status === 'rejected' && (
+        <p style={{ textAlign: 'center' }}>{message}</p>
+      )}
+      {status === 'resolved' && images.length !== totalImages && (
+        <Button
+          loadMore={() => {
+            setPage(prevPage => prevPage + 1);
+          }}
+        />
+      )}
+      {largeImageURL && (
+        <Modal
+          largeImageURL={largeImageURL}
+          closeModal={() => {
+            setLargeImageURL(null);
+          }}
+        />
+      )}
+    </div>
+  );
 }
