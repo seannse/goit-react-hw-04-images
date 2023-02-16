@@ -66,6 +66,14 @@ export function App() {
     toast.info('Your request has already been completed');
   }
 
+  function loadMore() {
+    setPage(prevPage => prevPage + 1);
+  }
+
+  function closeModal() {
+    setLargeImageURL(null);
+  }
+
   return (
     <div className={css.App}>
       <ToastContainer />
@@ -78,19 +86,10 @@ export function App() {
         <p style={{ textAlign: 'center' }}>{message}</p>
       )}
       {status === 'resolved' && images.length !== totalImages && (
-        <Button
-          loadMore={() => {
-            setPage(prevPage => prevPage + 1);
-          }}
-        />
+        <Button loadMore={loadMore} />
       )}
       {largeImageURL && (
-        <Modal
-          largeImageURL={largeImageURL}
-          closeModal={() => {
-            setLargeImageURL(null);
-          }}
-        />
+        <Modal largeImageURL={largeImageURL} closeModal={closeModal} />
       )}
     </div>
   );

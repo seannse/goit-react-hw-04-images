@@ -19,6 +19,10 @@ function Searchbar({ getQuery, disabled }) {
     setSearch('');
   }
 
+  function handleChange({ target }) {
+    setSearch(target.value);
+  }
+
   return (
     <header className={css.Searchbar}>
       <form className={css.SearchForm} onSubmit={handleSubmit}>
@@ -34,7 +38,7 @@ function Searchbar({ getQuery, disabled }) {
           placeholder="Search images and photos"
           name="search"
           value={search}
-          onChange={({ target }) => setSearch(target.value)}
+          onChange={handleChange}
           disabled={disabled}
         />
       </form>
