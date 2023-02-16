@@ -1,13 +1,12 @@
-import css from './App.module.css';
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { ToastContainer, toast } from 'react-toastify';
+
+import { Searchbar, ImageGallery, Loader, Button, Modal } from 'components';
+
 import 'react-toastify/dist/ReactToastify.css';
-import API from './API';
-import Searchbar from './components/Searchbar/Searchbar';
-import ImageGallery from './components/ImageGallery/ImageGallery';
-import Loader from './components/Loader/Loader';
-import Modal from './components/Modal/Modal';
-import Button from './components/Button/Button';
+import css from './styles/App.module.css';
+
+import API from './services/API';
 
 const api = new API();
 
